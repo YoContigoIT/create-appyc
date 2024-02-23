@@ -123,7 +123,7 @@ var installConfigDependencies = async (sourcePath, destinationPath) => {
   const mergedPackageJSON = {
     ...packageJSONDestination,
     // Merge scripts
-    script: {
+    scripts: {
       ...packageJSONDestination.scripts,
       ...packageJSONOrigin.scripts
     },
@@ -286,7 +286,7 @@ var config = () => {
 };
 
 // package.json
-var version = "1.0.6";
+var version = "1.0.7";
 
 // index.ts
 program.name("create-appyc").version(version, "-v, --version", "Output the current version").description("Create a new project with Appyc");
