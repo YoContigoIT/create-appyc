@@ -17,13 +17,13 @@ export default defineConfig({
   async onSuccess() {
     await cp(
       path.join(path.dirname(fileURLToPath(import.meta.url)), "templates"),
-      path.join("dist", "templates"),
+      path.join("dist", "templates", "actions", "config", "helpers", "utils"),
       {recursive: true},
     );
 
     await cp(
       path.join(path.dirname(fileURLToPath(import.meta.url)), "configs"),
-      path.join("dist", "configs"),
+      path.join("dist", "configs", "actions", "config", "helpers", "utils"),
       {recursive: true},
     );
   },

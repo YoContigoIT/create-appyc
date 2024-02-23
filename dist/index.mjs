@@ -284,7 +284,7 @@ var config = () => {
 };
 
 // package.json
-var version = "1.0.0";
+var version = "1.0.2";
 
 // index.ts
 program.name("create-appyc").version(version, "-v, --version", "Output the current version").description("Create a new project with Appyc");
