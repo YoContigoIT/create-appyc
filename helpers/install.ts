@@ -59,7 +59,7 @@ export const installConfigDependencies = async (sourcePath: string, destinationP
   const mergedPackageJSON = {
     ...packageJSONDestination,
     // Merge scripts
-    script: {
+    scripts: {
       ...packageJSONDestination.scripts,
       ...packageJSONOrigin.scripts,
     },
