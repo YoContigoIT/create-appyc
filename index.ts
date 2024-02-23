@@ -1,9 +1,11 @@
 import { program } from 'commander'
 import { config, create } from './actions'
+import { version } from './package.json'
 
 program
   .name("create-appyc")
-  .usage("[global options] command")
+  .version(version, '-v, --version', 'Output the current version')
+  .description('Create a new project with Appyc')
 
 program
   .command('create')

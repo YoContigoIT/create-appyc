@@ -283,8 +283,11 @@ var config = () => {
   });
 };
 
+// package.json
+var version = "1.0.0";
+
 // index.ts
-program.name("create-appyc").usage("[global options] command");
+program.name("create-appyc").version(version, "-v, --version", "Output the current version").description("Create a new project with Appyc");
 program.command("create").description("Create a new project").action(create);
 program.command("config").description("Initialize the configuration").action(config);
 if (process.argv.length <= 2)
