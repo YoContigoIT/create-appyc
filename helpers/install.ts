@@ -76,6 +76,10 @@ export const installConfigDependencies = async (sourcePath: string, destinationP
     jest: {
       ...packageJSONDestination.jest,
       ...packageJSONOrigin.jest
+    },
+    config: {
+      ...packageJSONDestination.config,
+      ...packageJSONOrigin.config
     }
   };
 

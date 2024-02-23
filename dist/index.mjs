@@ -57,11 +57,11 @@ var configChoices = {
   "nestjs": {
     value: "nestjs",
     description: "Config for NestJS"
-  },
-  "nodejs-express": {
-    value: "nodejs-express",
-    description: "Config for Node.js/Express"
   }
+  // 'express': {
+  //   value: 'express',
+  //   description: 'Config for Node.js/Express'
+  // }
 };
 
 // actions/create.ts
@@ -140,6 +140,10 @@ var installConfigDependencies = async (sourcePath, destinationPath) => {
     jest: {
       ...packageJSONDestination.jest,
       ...packageJSONOrigin.jest
+    },
+    config: {
+      ...packageJSONDestination.config,
+      ...packageJSONOrigin.config
     }
   };
   await writeFile(
@@ -286,7 +290,7 @@ var config = () => {
 };
 
 // package.json
-var version = "1.0.9";
+var version = "1.0.10";
 
 // index.ts
 program.name("create-appyc").version(version, "-v, --version", "Output the current version").description("Create a new project with Appyc");
