@@ -106,31 +106,19 @@ export const installConfigDependencies = async (sourcePath: string, destinationP
 
   installProcess.on('exit', async (code) => {
     if (code === 0) {
-      const createComandoScript = 'echo';
-      const createArgsScript = [
-        'npx --no -- commitlint --edit $1',
-        '>',
-        '.husky/commit-msg'
-      ];
-
-      const createScriptProcess = spawn(createComandoScript, createArgsScript, { shell: true });
-
-      createScriptProcess.stdout.on('data', (data) => {
-        console.log(`Create script of Husky: ${data}`);
-      });
-
-      createScriptProcess.stderr.on('data', (data) => {
-        console.error(`Create script of Husky: ${data}`);
-      });
-
-      createScriptProcess.on('close', (scriptCode) => {
-        console.log(`Husky script creation process closed with code ${scriptCode}`);
-      });
-
-      createScriptProcess.on('error', (err) => {
-        console.error(`Error running Husky script creation process: ${err}`);
-      });
       console.info(chalk.green(MESSAGES.DEPENDENCIES_INSTALLATION_SUCCEED(packageManager)));
+      const huskyInitProcess = spawn('npx', ['husky', 'init'], {
+        stdio: 'inherit',
+        cwd: destinationPath
+      });
+
+      huskyInitProcess.on('exit', (huskyCode) => {
+        if (huskyCode === 0) {
+          console.info(chalk.green('Husky initialization successful.'));
+        } else {
+          console.error(chalk.red('Husky initialization failed.'));
+        }
+      });
     } else {
       chalk.red(
         MESSAGES.PACKAGE_MANAGER_INSTALLATION_FAILED(

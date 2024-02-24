@@ -166,26 +166,18 @@ var installConfigDependencies = async (sourcePath, destinationPath) => {
   });
   installProcess.on("exit", async (code) => {
     if (code === 0) {
-      const createComandoScript = "echo";
-      const createArgsScript = [
-        "npx --no -- commitlint --edit $1",
-        ">",
-        ".husky/commit-msg"
-      ];
-      const createScriptProcess = spawn(createComandoScript, createArgsScript, { shell: true });
-      createScriptProcess.stdout.on("data", (data) => {
-        console.log(`Create script of Husky: ${data}`);
-      });
-      createScriptProcess.stderr.on("data", (data) => {
-        console.error(`Create script of Husky: ${data}`);
-      });
-      createScriptProcess.on("close", (scriptCode) => {
-        console.log(`Husky script creation process closed with code ${scriptCode}`);
-      });
-      createScriptProcess.on("error", (err) => {
-        console.error(`Error running Husky script creation process: ${err}`);
-      });
       console.info(chalk2.green(MESSAGES.DEPENDENCIES_INSTALLATION_SUCCEED(packageManager)));
+      const huskyInitProcess = spawn("npx", ["husky", "init"], {
+        stdio: "inherit",
+        cwd: destinationPath
+      });
+      huskyInitProcess.on("exit", (huskyCode) => {
+        if (huskyCode === 0) {
+          console.info(chalk2.green("Husky initialization successful."));
+        } else {
+          console.error(chalk2.red("Husky initialization failed."));
+        }
+      });
     } else {
       chalk2.red(
         MESSAGES.PACKAGE_MANAGER_INSTALLATION_FAILED(
@@ -317,7 +309,7 @@ var config = () => {
 };
 
 // package.json
-var version = "1.0.14";
+var version = "1.0.16";
 
 // index.ts
 program.name("create-appyc").version(version, "-v, --version", "Output the current version").description("Create a new project with Appyc");
