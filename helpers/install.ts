@@ -89,8 +89,15 @@ export const installConfigDependencies = async (sourcePath: string, destinationP
   );
 
   const packageManager = extractPackageManager(packageLock) ?? 'npm'
-  const args = ['install'];
-
+  const args = [
+    'install',
+    'husky',
+    'conventional-changelog',
+    'cz-conventional-changelog',
+    '@commitlint/cli',
+    '@commitlint/config-conventional',
+    '@commitlint/prompt-cli'
+  ];
 
   const installProcess = spawn(packageManager, args, {
     stdio: 'inherit',
@@ -99,8 +106,31 @@ export const installConfigDependencies = async (sourcePath: string, destinationP
 
   installProcess.on('exit', async (code) => {
     if (code === 0) {
+      const createComandoScript = 'echo';
+      const createArgsScript = [
+        'npx --no -- commitlint --edit $1',
+        '>',
+        '.husky/commit-msg'
+      ];
+
+      const createScriptProcess = spawn(createComandoScript, createArgsScript, { shell: true });
+
+      createScriptProcess.stdout.on('data', (data) => {
+        console.log(`Create script of Husky: ${data}`);
+      });
+
+      createScriptProcess.stderr.on('data', (data) => {
+        console.error(`Create script of Husky: ${data}`);
+      });
+
+      createScriptProcess.on('close', (scriptCode) => {
+        console.log(`Husky script creation process closed with code ${scriptCode}`);
+      });
+
+      createScriptProcess.on('error', (err) => {
+        console.error(`Error running Husky script creation process: ${err}`);
+      });
       console.info(chalk.green(MESSAGES.DEPENDENCIES_INSTALLATION_SUCCEED(packageManager)));
-      await configHusky(packageManager);
     } else {
       chalk.red(
         MESSAGES.PACKAGE_MANAGER_INSTALLATION_FAILED(
@@ -118,64 +148,4 @@ export const installConfigDependencies = async (sourcePath: string, destinationP
       ),
     )
   })
-}
-
-
-const configHusky = async (packageManager: string) => {
-  // Array of arguments to install multiple packages
-  const args = [
-    packageManager !== 'yarn' ? 'install' : '',
-    'husky',
-    'conventional-changelog',
-    'cz-conventional-changelog',
-    '@commitlint/cli',
-    '@commitlint/config-conventional',
-    '@commitlint/prompt-cli'
-  ];
-
-  // Create the process to install the packages
-  const installPackagesProcess = spawn(packageManager, args);
-
-  // Manage the output of the process
-  installPackagesProcess.stdout.on('data', (data) => {
-    console.log(`Instalando paquetes - stdout: ${data}`);
-  });
-
-  installPackagesProcess.stderr.on('data', (data) => {
-    console.error(`Instalando paquetes - stderr: ${data}`);
-  });
-
-  installPackagesProcess.on('close', (code) => {
-    console.log(`Code-closed package installation process ${code}`);
-
-    // Create the Husky script
-    const createComandoScript = 'echo';
-    const createArgsScript = [
-      'npx --no -- commitlint --edit $1',
-      '>',
-      '.husky/commit-msg'
-    ];
-
-    const createScriptProcess = spawn(createComandoScript, createArgsScript, { shell: true });
-
-    createScriptProcess.stdout.on('data', (data) => {
-      console.log(`Create script of Husky: ${data}`);
-    });
-
-    createScriptProcess.stderr.on('data', (data) => {
-      console.error(`Create script of Husky: ${data}`);
-    });
-
-    createScriptProcess.on('close', (scriptCode) => {
-      console.log(`Husky script creation process closed with code ${scriptCode}`);
-    });
-
-    createScriptProcess.on('error', (err) => {
-      console.error(`Error running Husky script creation process: ${err}`);
-    });
-  });
-
-  installPackagesProcess.on('error', (err) => {
-    console.error(`Error running the package installation process: ${err}`);
-  });
 }
