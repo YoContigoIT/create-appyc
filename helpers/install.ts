@@ -80,6 +80,10 @@ export const installConfigDependencies = async (sourcePath: string, destinationP
     config: {
       ...packageJSONDestination.config,
       ...packageJSONOrigin.config
+    },
+    husky: {
+      ...packageJSONDestination.husky,
+      ...packageJSONOrigin.husky
     }
   };
 

@@ -144,6 +144,10 @@ var installConfigDependencies = async (sourcePath, destinationPath) => {
     config: {
       ...packageJSONDestination.config,
       ...packageJSONOrigin.config
+    },
+    husky: {
+      ...packageJSONDestination.husky,
+      ...packageJSONOrigin.husky
     }
   };
   await writeFile(
@@ -290,7 +294,7 @@ var config = () => {
 };
 
 // package.json
-var version = "1.0.11";
+var version = "1.0.12";
 
 // index.ts
 program.name("create-appyc").version(version, "-v, --version", "Output the current version").description("Create a new project with Appyc");
