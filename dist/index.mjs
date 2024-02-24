@@ -152,7 +152,7 @@ var installConfigDependencies = async (sourcePath, destinationPath) => {
   );
   const packageManager = extractPackageManager(packageLock) ?? "npm";
   const args = [
-    "install",
+    packageManager === "yarn" ? "add" : "install",
     "husky",
     "conventional-changelog",
     "cz-conventional-changelog",
@@ -309,7 +309,7 @@ var config = () => {
 };
 
 // package.json
-var version = "1.0.16";
+var version = "1.0.17";
 
 // index.ts
 program.name("create-appyc").version(version, "-v, --version", "Output the current version").description("Create a new project with Appyc");

@@ -90,7 +90,7 @@ export const installConfigDependencies = async (sourcePath: string, destinationP
 
   const packageManager = extractPackageManager(packageLock) ?? 'npm'
   const args = [
-    'install',
+    packageManager === 'yarn' ? 'add' : 'install',
     'husky',
     'conventional-changelog',
     'cz-conventional-changelog',
