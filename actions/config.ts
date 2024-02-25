@@ -23,8 +23,9 @@ export const config = () => {
     .then(async answers => {
       // Get the selected project
       const project = answers.projectConfig
+
+      // Get the selected type
       const typeProject = answers.type
-      // Get the project directory
 
       // root directory
       const destination = process.cwd()

@@ -57,11 +57,11 @@ var configChoices = {
   "nestjs": {
     value: "nestjs",
     description: "Config for NestJS"
+  },
+  "express": {
+    value: "express",
+    description: "Config for Express with TypeScript"
   }
-  // 'express': {
-  //   value: 'express',
-  //   description: 'Config for Node.js/Express'
-  // }
 };
 
 // actions/create.ts
@@ -122,24 +122,17 @@ var installConfigDependencies = async (sourcePath, destinationPath) => {
   const [packageLock] = await glob(path.join(destinationPath, "{yarn.lock,package-lock.json,pnpm-lock.yaml}"));
   const mergedPackageJSON = {
     ...packageJSONDestination,
-    // Merge scripts
     scripts: {
       ...packageJSONDestination.scripts,
       ...packageJSONOrigin.scripts
     },
-    // Merge dependencies
     dependencies: {
       ...packageJSONDestination.dependencies,
       ...packageJSONOrigin.dependencies
     },
-    // Merge devDependencies
     devDependencies: {
       ...packageJSONDestination.devDependencies,
       ...packageJSONOrigin.devDependencies
-    },
-    jest: {
-      ...packageJSONDestination.jest,
-      ...packageJSONOrigin.jest
     },
     config: {
       ...packageJSONDestination.config,
@@ -309,12 +302,28 @@ var config = () => {
 };
 
 // package.json
-var version = "1.0.17";
+var version = "1.0.18";
 
 // index.ts
+import readline from "readline";
 program.name("create-appyc").version(version, "-v, --version", "Output the current version").description("Create a new project with Appyc");
 program.command("create").description("Create a new project").action(create);
 program.command("config").description("Initialize the configuration").action(config);
+program.command("cancel").description("Cancel the operation").action(() => {
+  () => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    console.log("Goodbye! Thanks for using create-appyc.");
+    rl.question("Press Enter to exit...", () => {
+      rl.close();
+      process.exit(0);
+    });
+    process.exit(0);
+  };
+  process.exit(0);
+});
 if (process.argv.length <= 2)
   console.log(program.help());
 else

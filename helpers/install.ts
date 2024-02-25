@@ -58,24 +58,17 @@ export const installConfigDependencies = async (sourcePath: string, destinationP
 
   const mergedPackageJSON = {
     ...packageJSONDestination,
-    // Merge scripts
     scripts: {
       ...packageJSONDestination.scripts,
       ...packageJSONOrigin.scripts,
     },
-    // Merge dependencies
     dependencies: {
       ...packageJSONDestination.dependencies,
       ...packageJSONOrigin.dependencies
     },
-    // Merge devDependencies
     devDependencies: {
       ...packageJSONDestination.devDependencies,
       ...packageJSONOrigin.devDependencies
-    },
-    jest: {
-      ...packageJSONDestination.jest,
-      ...packageJSONOrigin.jest
     },
     config: {
       ...packageJSONDestination.config,

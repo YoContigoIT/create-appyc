@@ -1,0 +1,9 @@
+root = true
+
+[*]
+indent_style = space # Use spaces for indentation
+indent_size = 2 # 2 spaces for indentation
+end_of_line = lf # Use Unix line endings
+charset = utf-8 # Use UTF-8 character encoding
+trim_trailing_whitespace = true # Remove trailing whitespaces
+insert_final_newline = true # Add a newline at the end of the file
