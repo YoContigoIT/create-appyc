@@ -1,0 +1,13 @@
+version: '3.9'
+services:
+  nestjs-app:
+    image: postgres:14.1-alpine
+    container_name: nestjs-app
+    restart: always
+    environment:
+      - APP-NAME=${APP_NAME}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - 5432:5432

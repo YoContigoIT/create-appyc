@@ -5,7 +5,7 @@ import { program } from "commander";
 
 // actions/create.ts
 import inquirer from "inquirer";
-import fs, { promises } from "fs";
+import fs from "fs/promises";
 import path2 from "path";
 import { fileURLToPath } from "url";
 
@@ -48,9 +48,37 @@ In case you don't see any errors above, consider manually running the failed com
 
 // utils/template-choices.ts
 var templateChoices = {
+  "nestjs-jwt-strategy": {
+    value: "nestjs-jwt-strategy",
+    description: "NestJS with JWT Strategy"
+  },
   "nodejs-express-basic": {
     value: "nodejs-express-basic",
     description: "Node.js with TypeScript"
+  }
+};
+var connectorsDatabaseChoices = {
+  "sequelize": {
+    value: "sequelize",
+    description: "Sequelize"
+  },
+  "typeorm": {
+    value: "typeorm",
+    description: "TypeORM"
+  }
+};
+var databaseChoises = {
+  "mongodb": {
+    value: "mongodb",
+    description: "MongoDB Database"
+  },
+  "mysql": {
+    value: "mysql",
+    description: "MySQL Database"
+  },
+  "postgres": {
+    value: "postgres",
+    description: "Postgres Database"
   }
 };
 var configChoices = {
@@ -199,14 +227,33 @@ async function readPackageJson(filePath) {
 }
 
 // actions/create.ts
-var create = () => {
-  inquirer.prompt([
+var create = async () => {
+  const initialOptions = await inquirer.prompt([
     {
       type: "list",
       name: "template",
       message: "Select a template:",
       choices: Object.keys(templateChoices)
     },
+    {
+      type: "list",
+      name: "database",
+      message: "Select the database to use:",
+      choices: Object.keys(databaseChoises)
+    }
+  ]);
+  let useDatabase = { connector: "" };
+  if (initialOptions.database !== "mongodb") {
+    useDatabase = await inquirer.prompt([
+      {
+        type: "list",
+        name: "connector",
+        message: "Select the connector to use:",
+        choices: Object.keys(connectorsDatabaseChoices)
+      }
+    ]);
+  }
+  const configProyect = await inquirer.prompt([
     {
       type: "input",
       name: "name",
@@ -225,27 +272,25 @@ var create = () => {
       message: "Select a package manager:",
       choices: ["npm", "yarn", "pnpm"]
     }
-  ]).then(async (answers) => {
-    const project = templateChoices[answers.template];
-    const projectDirectory = answers.name;
-    const destination = path2.join(process.cwd(), projectDirectory);
-    const template = path2.join(
-      path2.dirname(fileURLToPath(import.meta.url)),
-      "templates",
-      project.value
-    );
-    if (fs.existsSync(destination)) {
-      console.error(chalk3.red(MESSAGES.DIRECTORY_ALREADY_EXISTS(projectDirectory)));
-      process.exit(1);
-    }
-    await promises.cp(path2.join(template, "project"), destination, { recursive: true });
-    const packageManagerOptions = {
-      npm: "npm install",
-      yarn: "yarn",
-      pnpm: "pnpm install"
-    };
-    await installDependenciesInNewProject(destination, answers.packageManager, projectDirectory);
+  ]);
+  const project = templateChoices[initialOptions.template];
+  const projectDirectory = configProyect.name;
+  const destination = path2.join(process.cwd(), projectDirectory);
+  const template = path2.join(
+    path2.dirname(fileURLToPath(import.meta.url)),
+    "templates",
+    project.value
+  );
+  fs.mkdir(destination).catch((err) => {
+    console.error(chalk3.red(MESSAGES.DIRECTORY_ALREADY_EXISTS(projectDirectory)));
+    process.exit(1);
   });
+  if (initialOptions.database !== "mongodb") {
+    await fs.cp(path2.join(template, `${initialOptions.database}/${useDatabase.connector}`), destination, { recursive: true });
+  } else {
+    await fs.cp(path2.join(template, "mongoose"), destination, { recursive: true });
+  }
+  await installDependenciesInNewProject(destination, configProyect.packageManager, projectDirectory);
 };
 
 // actions/config.ts
@@ -305,25 +350,9 @@ var config = () => {
 var version = "1.0.18";
 
 // index.ts
-import readline from "readline";
 program.name("create-appyc").version(version, "-v, --version", "Output the current version").description("Create a new project with Appyc");
 program.command("create").description("Create a new project").action(create);
 program.command("config").description("Initialize the configuration").action(config);
-program.command("cancel").description("Cancel the operation").action(() => {
-  () => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-    console.log("Goodbye! Thanks for using create-appyc.");
-    rl.question("Press Enter to exit...", () => {
-      rl.close();
-      process.exit(0);
-    });
-    process.exit(0);
-  };
-  process.exit(0);
-});
 if (process.argv.length <= 2)
   console.log(program.help());
 else

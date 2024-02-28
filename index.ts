@@ -9,10 +9,10 @@ program
   .version(version, '-v, --version', 'Output the current version')
   .description('Create a new project with Appyc')
 
-// program
-//   .command('create')
-//   .description('Create a new project')
-//   .action(create)
+program
+  .command('create')
+  .description('Create a new project')
+  .action(create)
 
 program
   .command('config')
