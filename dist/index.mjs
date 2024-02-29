@@ -100,11 +100,26 @@ import { readFile } from "fs/promises";
 
 // helpers/install.ts
 import chalk2 from "chalk";
-import { glob } from "glob";
 import { spawn } from "child_process";
 import os from "os";
 import path from "path";
 import { writeFile } from "fs/promises";
+
+// helpers/searchLockFile.ts
+import { readdir } from "fs/promises";
+async function searchLockFile(destinationPath) {
+  try {
+    const files = await readdir(destinationPath);
+    const regex = /^(yarn\.lock|package-lock\.json|pnpm-lock\.yaml)$/;
+    const matchedFiles = files.filter((file) => regex.test(file));
+    return matchedFiles;
+  } catch (err) {
+    console.error("Error al leer el directorio:", err);
+    return [];
+  }
+}
+
+// helpers/install.ts
 var installDependenciesInNewProject = async (destinationPath, packageManager, projectName) => {
   const installProcess = spawn(packageManager, ["install"], {
     stdio: "inherit",
@@ -147,7 +162,7 @@ var installDependenciesInNewProject = async (destinationPath, packageManager, pr
 var installConfigDependencies = async (sourcePath, destinationPath) => {
   const packageJSONOrigin = await readPackageJson(sourcePath);
   const packageJSONDestination = await readPackageJson(path.join(destinationPath, "package.json"));
-  const [packageLock] = await glob(path.join(destinationPath, "{yarn.lock,package-lock.json,pnpm-lock.yaml}"));
+  const [lockFile] = await searchLockFile(destinationPath);
   const mergedPackageJSON = {
     ...packageJSONDestination,
     scripts: {
@@ -171,7 +186,7 @@ var installConfigDependencies = async (sourcePath, destinationPath) => {
     path.join(destinationPath, "package.json"),
     JSON.stringify(mergedPackageJSON, null, 2) + os.EOL
   );
-  const packageManager = extractPackageManager(packageLock) ?? "npm";
+  const packageManager = extractPackageManager(lockFile) ?? "npm";
   const args = [
     packageManager === "yarn" ? "add" : "install",
     "husky",
@@ -295,29 +310,8 @@ var create = async () => {
 
 // actions/config.ts
 import inquirer2 from "inquirer";
-import path4 from "path";
-import { fileURLToPath as fileURLToPath2 } from "url";
-
-// helpers/copy.ts
-import chalk4 from "chalk";
-import ncp from "ncp";
 import path3 from "path";
-var copyFiles = (projectConfigPath, destinationPath, projectName) => {
-  ncp(projectConfigPath, destinationPath, {
-    filter: (source) => {
-      const nombreArchivo = path3.basename(source);
-      return nombreArchivo !== "package.json";
-    }
-  }, function(error) {
-    if (error) {
-      console.error(chalk4.red(MESSAGES.CONFIG_INIT_FAILED));
-    } else {
-      console.log(chalk4.green(MESSAGES.CONFIG_INIT_SUCCEED(projectName)));
-    }
-  });
-};
-
-// actions/config.ts
+import { fileURLToPath as fileURLToPath2 } from "url";
 var config = () => {
   inquirer2.prompt([
     {
@@ -336,18 +330,17 @@ var config = () => {
     const project = answers.projectConfig;
     const typeProject = answers.type;
     const destination = process.cwd();
-    const projectConfig = path4.join(
-      path4.dirname(fileURLToPath2(import.meta.url)),
+    const projectConfig = path3.join(
+      path3.dirname(fileURLToPath2(import.meta.url)),
       "configs",
       `${project}/${typeProject}`
     );
-    copyFiles(projectConfig, destination, project);
-    await installConfigDependencies(path4.join(projectConfig, "package.json"), destination);
+    await installConfigDependencies(path3.join(projectConfig, "package.json"), destination);
   });
 };
 
 // package.json
-var version = "1.0.18";
+var version = "1.1.0";
 
 // index.ts
 program.name("create-appyc").version(version, "-v, --version", "Output the current version").description("Create a new project with Appyc");

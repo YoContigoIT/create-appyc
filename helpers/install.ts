@@ -6,6 +6,7 @@ import path from 'path'
 import { extractPackageManager, readPackageJson } from '.';
 import { MESSAGES } from '../utils/messages';
 import { writeFile } from 'fs/promises';
+import { searchLockFile } from './searchLockFile';
 
 export const installDependenciesInNewProject = async (destinationPath: string, packageManager: string, projectName: string) => {
   const installProcess = spawn(packageManager, ['install'], {
@@ -53,8 +54,8 @@ export const installDependenciesInNewProject = async (destinationPath: string, p
 export const installConfigDependencies = async (sourcePath: string, destinationPath: string) => {
   const packageJSONOrigin = await readPackageJson(sourcePath);
   const packageJSONDestination = await readPackageJson(path.join(destinationPath, "package.json"));
-
-  const [packageLock] = await glob(path.join(destinationPath, '{yarn.lock,package-lock.json,pnpm-lock.yaml}'))
+  const [lockFile] = await searchLockFile(destinationPath);
+  
 
   const mergedPackageJSON = {
     ...packageJSONDestination,
@@ -81,7 +82,7 @@ export const installConfigDependencies = async (sourcePath: string, destinationP
     JSON.stringify(mergedPackageJSON, null, 2) + os.EOL
   );
 
-  const packageManager = extractPackageManager(packageLock) ?? 'npm'
+  const packageManager = extractPackageManager(lockFile) ?? 'npm'
   const args = [
     packageManager === 'yarn' ? 'add' : 'install',
     'husky',

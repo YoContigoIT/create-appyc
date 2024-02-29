@@ -37,7 +37,7 @@ export const config = () => {
         `${project}/${typeProject}`
       )
       
-      copyFiles(projectConfig, destination, project)
+      // copyFiles(projectConfig, destination, project)
 
       await installConfigDependencies(path.join(projectConfig, "package.json"), destination)
     })
