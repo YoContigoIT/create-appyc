@@ -95,7 +95,7 @@ export const installAndConfigDependencies = async (
     console.info(chalk.blue("Initializing Husky..."));
     await initializeHusky(destinationPath);
 
-    console.info(chalk.green("Setup complete."));
+    console.info(chalk.green(`Setup complete at ${process.cwd()}.`));
   } catch (error) {
     console.error(chalk.red(`Setup failed: ${error.message}`));
   }

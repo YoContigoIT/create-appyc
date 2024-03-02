@@ -187,7 +187,7 @@ var installAndConfigDependencies = async (destinationPath, packageManager) => {
     }
     console.info(chalk2.blue("Initializing Husky..."));
     await initializeHusky(destinationPath);
-    console.info(chalk2.green("Setup complete."));
+    console.info(chalk2.green(`Setup complete at ${process.cwd()}.`));
   } catch (error) {
     console.error(chalk2.red(`Setup failed: ${error.message}`));
   }
@@ -202,31 +202,35 @@ async function readPackageJson(filePath) {
 // helpers/showConsoleInfo.ts
 import chalk3 from "chalk";
 var showConsoleInfo = async (packageManager, projectName, nestProject = false) => {
-  console.log("Inside that directory, you can run several commands:");
   console.log();
-  console.log(
+  console.info(chalk3.yellow("Dont forget to copy the .env.example file to .env and fill in the necessary environment variables."));
+  console.info(chalk3.red("IMPORTANT: Dont delete the .env.example file, it is used as a reference for the environment variables."));
+  console.log();
+  console.info("Inside that directory, you can run several commands:");
+  console.log();
+  console.info(
     chalk3.cyan(
-      `  ${packageManager} ${packageManager !== "npm" ? "" : "run"} ${nestProject ? "start:dev" : "dev"}`
+      `  ${packageManager}${packageManager !== "npm" ? "" : "run"} ${nestProject ? "start:dev" : "dev"}`
     )
   );
-  console.log("    Starts the development server.");
+  console.info("    Starts the development server.");
   console.log();
-  console.log(
+  console.info(
     chalk3.cyan(
-      `  ${packageManager} ${packageManager !== "npm" ? "" : "run"} ${nestProject ? "start:build" : "build"}`
+      `  ${packageManager}${packageManager !== "npm" ? "" : "run"} ${nestProject ? "start:build" : "build"}`
     )
   );
-  console.log("    Builds the app for production.");
+  console.info("    Builds the app for production.");
   console.log();
-  console.log(chalk3.cyan(`  ${packageManager} start`));
-  console.log("    Runs the built app in production mode.");
+  console.info(chalk3.cyan(`  ${packageManager} start`));
+  console.info("    Runs the built app in production mode.");
   console.log();
-  console.log("We suggest that you begin by typing:");
+  console.info("We suggest that you begin by typing:");
   console.log();
-  console.log(chalk3.cyan("  cd"), projectName);
-  console.log(
+  console.info(chalk3.cyan("  cd"), projectName);
+  console.info(
     `  ${chalk3.cyan(
-      `${packageManager} ${packageManager !== "npm" ? "" : "run"} ${nestProject ? "start:dev" : "dev"}`
+      `${packageManager}${packageManager !== "npm" ? "" : "run"} ${nestProject ? "start:dev" : "dev"}`
     )}`
   );
 };
