@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 
 import { program } from 'commander'
+import updateNotifier from 'update-notifier'
 import { config, create } from './actions'
-import { version } from './package.json'
+import pkg from './package.json'
+
+const notifier = updateNotifier({pkg});
+notifier.notify();
 
 program
   .name("create-appyc")
-  .version(version, '-v, --version', 'Output the current version')
+  .version(pkg.version, '-v, --version', 'Output the current version')
   .description('Create a new project with Appyc')
 
 program
