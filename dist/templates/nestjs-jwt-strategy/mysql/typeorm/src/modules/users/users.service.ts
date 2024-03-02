@@ -6,10 +6,10 @@ import {
 } from '@nestjs/common';
 import { compare, hash } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { User } from 'src/access-data/typeorm/entities/user.entity';
-import { UserRepository } from 'src/repositories/typeorm/user.repository';
+import { User } from '../../access-data/typeorm/entities/user.entity';
+import { UserRepository } from '../../repositories/typeorm/user.repository';
 import { CreateUserDto } from './dto/create-user.dto';
-import { DBErrors } from 'src/utils/database-errors';
+import { DBErrors } from '../../utils/database-errors';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 

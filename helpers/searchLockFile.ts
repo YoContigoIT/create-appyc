@@ -1,19 +1,20 @@
 import { readdir } from "fs/promises";
 
-export async function searchLockFile(destinationPath) {
-  try {
-    // Read the directory
-    const files = await readdir(destinationPath);
+const packageManagers = {
+  "package-lock.json": "npm",
+  "yarn.lock": "yarn",
+  "pnpm-lock.yaml": "pnpm",
+};
 
-    // Regular expression to match the lock files
-    const regex = /^(yarn\.lock|package-lock\.json|pnpm-lock\.yaml)$/;
+export async function searchLockFile(destinationPath): Promise<string> {
+  // Read the directory
+  const files = await readdir(destinationPath);
 
-    // Filter the files
-    const matchedFiles = files.filter((file) => regex.test(file));
+  // Regular expression to match the lock files
+  const regex = /^(yarn\.lock|package-lock\.json|pnpm-lock\.yaml)$/;
 
-    return matchedFiles; // Return the matched files
-  } catch (err) {
-    console.error("Error al leer el directorio:", err);
-    return []; // Return an empty array
-  }
+  // Filter the files
+  const matchedFiles = files.find((file) => regex.test(file));
+
+  return packageManagers[matchedFiles ?? "npm"]; // Return the matched files
 }

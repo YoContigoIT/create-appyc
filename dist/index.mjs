@@ -38,6 +38,7 @@ var EMOJIS = {
 var MESSAGES = {
   PACKAGE_MANAGER_INSTALLATION_SUCCEED: (name) => name !== "." ? `${EMOJIS.ROCKET}  Successfully created project ${chalk.green(name)}` : `${EMOJIS.ROCKET}  Successfully created a new project`,
   DEPENDENCIES_INSTALLATION_SUCCEED: (name) => `${EMOJIS.ROCKET}  Dependencies installed successfully with ${chalk.green(name)}`,
+  DEPENDENCIES_INSTALLATION_FAILED: `${EMOJIS.SCREAM}  Dependencies installation failed!`,
   PACKAGE_MANAGER_INSTALLATION_FAILED: (commandToRunManually) => `${EMOJIS.SCREAM}  Packages installation failed!
 In case you don't see any errors above, consider manually running the failed command ${commandToRunManually} to see more details on why it errored out.`,
   PACKAGE_MANAGER_INSTALLATION_IN_PROGRESS: `Package installation in progress... ${EMOJIS.COFFEE}`,
@@ -51,11 +52,11 @@ var templateChoices = {
   "nestjs-jwt-strategy": {
     value: "nestjs-jwt-strategy",
     description: "NestJS with JWT Strategy"
-  },
-  "nodejs-express-basic": {
-    value: "nodejs-express-basic",
-    description: "Node.js with TypeScript"
   }
+  // 'nodejs-express-basic': {
+  //   value: 'nodejs-express-basic',
+  //   description: 'Node.js with TypeScript'
+  // }
 };
 var connectorsDatabaseChoices = {
   "sequelize": {
@@ -93,7 +94,7 @@ var configChoices = {
 };
 
 // actions/create.ts
-import chalk3 from "chalk";
+import chalk4 from "chalk";
 
 // helpers/index.ts
 import { readFile } from "fs/promises";
@@ -101,94 +102,61 @@ import { readFile } from "fs/promises";
 // helpers/install.ts
 import chalk2 from "chalk";
 import { spawn } from "child_process";
-import os from "os";
-import path from "path";
-import { writeFile } from "fs/promises";
 
-// helpers/searchLockFile.ts
-import { readdir } from "fs/promises";
-async function searchLockFile(destinationPath) {
+// helpers/checkGitDirectory.ts
+import { access } from "fs/promises";
+import path from "path";
+var checkGitDirectory = async (directory) => {
   try {
-    const files = await readdir(destinationPath);
-    const regex = /^(yarn\.lock|package-lock\.json|pnpm-lock\.yaml)$/;
-    const matchedFiles = files.filter((file) => regex.test(file));
-    return matchedFiles;
+    const gitPath = path.join(directory, ".git");
+    await access(gitPath);
+    return true;
   } catch (err) {
-    console.error("Error al leer el directorio:", err);
-    return [];
+    return false;
   }
-}
+};
 
 // helpers/install.ts
-var installDependenciesInNewProject = async (destinationPath, packageManager, projectName) => {
-  const installProcess = spawn(packageManager, ["install"], {
-    stdio: "inherit",
-    cwd: destinationPath
-  });
-  installProcess.on("exit", (code) => {
-    if (code === 0) {
-      console.info(chalk2.green(MESSAGES.PACKAGE_MANAGER_INSTALLATION_SUCCEED(packageManager)));
-      console.log("Inside that directory, you can run several commands:");
-      console.log();
-      console.log(chalk2.cyan(`  ${packageManager} ${packageManager !== "npm" ? "" : "run "}dev`));
-      console.log("    Starts the development server.");
-      console.log();
-      console.log(chalk2.cyan(`  ${packageManager} ${packageManager !== "npm" ? "" : "run "}build`));
-      console.log("    Builds the app for production.");
-      console.log();
-      console.log(chalk2.cyan(`  ${packageManager} start`));
-      console.log("    Runs the built app in production mode.");
-      console.log();
-      console.log("We suggest that you begin by typing:");
-      console.log();
-      console.log(chalk2.cyan("  cd"), projectName);
-      console.log(`  ${chalk2.cyan(`${packageManager} ${packageManager !== "npm" ? "" : "run "}dev`)}`);
-    } else {
-      chalk2.red(
-        MESSAGES.PACKAGE_MANAGER_INSTALLATION_FAILED(
-          chalk2.bold(packageManager)
-        )
-      );
-    }
-  });
-  installProcess.on("error", (error) => {
-    chalk2.red(
-      MESSAGES.PACKAGE_MANAGER_INSTALLATION_FAILED(
-        chalk2.bold(packageManager)
-      )
-    );
+var runCommand = async (command, args, cwd) => {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      stdio: "inherit",
+      cwd,
+      shell: process.platform === "win32"
+    });
+    child.on("exit", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error("Command failed to execute."));
+      }
+    });
+    child.on("error", reject);
   });
 };
-var installConfigDependencies = async (sourcePath, destinationPath) => {
-  const packageJSONOrigin = await readPackageJson(sourcePath);
-  const packageJSONDestination = await readPackageJson(path.join(destinationPath, "package.json"));
-  const [lockFile] = await searchLockFile(destinationPath);
-  const mergedPackageJSON = {
-    ...packageJSONDestination,
-    scripts: {
-      ...packageJSONDestination.scripts,
-      ...packageJSONOrigin.scripts
-    },
-    dependencies: {
-      ...packageJSONDestination.dependencies,
-      ...packageJSONOrigin.dependencies
-    },
-    devDependencies: {
-      ...packageJSONDestination.devDependencies,
-      ...packageJSONOrigin.devDependencies
-    },
-    config: {
-      ...packageJSONDestination.config,
-      ...packageJSONOrigin.config
-    }
-  };
-  await writeFile(
-    path.join(destinationPath, "package.json"),
-    JSON.stringify(mergedPackageJSON, null, 2) + os.EOL
+var installDependencies = async (destinationPath, packageManager, dependencies, isDev = false) => {
+  let args = [packageManager === "yarn" ? "add" : "install", ...dependencies];
+  if (isDev) {
+    args.push(packageManager === "yarn" ? "--dev" : "-D");
+  }
+  if (process.platform === "win32") {
+    args = ["/c", packageManager].concat(args);
+  }
+  await runCommand(
+    process.platform === "win32" ? "cmd" : packageManager,
+    args,
+    destinationPath
   );
-  const packageManager = extractPackageManager(lockFile) ?? "npm";
-  const args = [
-    packageManager === "yarn" ? "add" : "install",
+  console.info(
+    chalk2.green(MESSAGES.DEPENDENCIES_INSTALLATION_SUCCEED(packageManager))
+  );
+};
+var initializeHusky = async (destinationPath) => {
+  await runCommand("npx", ["husky", "init"], destinationPath);
+  console.info(chalk2.green("Husky initialization successful."));
+};
+var installAndConfigDependencies = async (destinationPath, packageManager) => {
+  const devDependencies = [
     "husky",
     "conventional-changelog",
     "cz-conventional-changelog",
@@ -196,50 +164,78 @@ var installConfigDependencies = async (sourcePath, destinationPath) => {
     "@commitlint/config-conventional",
     "@commitlint/prompt-cli"
   ];
-  const installProcess = spawn(packageManager, args, {
-    stdio: "inherit",
-    cwd: destinationPath
-  });
-  installProcess.on("exit", async (code) => {
-    if (code === 0) {
-      console.info(chalk2.green(MESSAGES.DEPENDENCIES_INSTALLATION_SUCCEED(packageManager)));
-      const huskyInitProcess = spawn("npx", ["husky", "init"], {
-        stdio: "inherit",
-        cwd: destinationPath
-      });
-      huskyInitProcess.on("exit", (huskyCode) => {
-        if (huskyCode === 0) {
-          console.info(chalk2.green("Husky initialization successful."));
-        } else {
-          console.error(chalk2.red("Husky initialization failed."));
-        }
-      });
-    } else {
-      chalk2.red(
-        MESSAGES.PACKAGE_MANAGER_INSTALLATION_FAILED(
-          chalk2.bold(packageManager)
-        )
+  const productionDependencies = ["@swc/cli", "@swc/core", "@swc/jest"];
+  try {
+    console.info(chalk2.blue("Installing development dependencies..."));
+    await installDependencies(
+      destinationPath,
+      packageManager,
+      devDependencies,
+      true
+    );
+    if (productionDependencies.length > 0) {
+      console.info(chalk2.blue("Installing production dependencies..."));
+      await installDependencies(
+        destinationPath,
+        packageManager,
+        productionDependencies
       );
     }
-  });
-  installProcess.on("error", (error) => {
-    chalk2.red(
-      MESSAGES.PACKAGE_MANAGER_INSTALLATION_FAILED(
-        chalk2.bold(packageManager)
-      )
-    );
-  });
+    const exists = await checkGitDirectory(destinationPath);
+    if (!exists) {
+      runCommand("git", ["init"], destinationPath);
+    }
+    console.info(chalk2.blue("Initializing Husky..."));
+    await initializeHusky(destinationPath);
+    console.info(chalk2.green("Setup complete."));
+  } catch (error) {
+    console.error(chalk2.red(`Setup failed: ${error.message}`));
+  }
 };
 
 // helpers/index.ts
-var extractPackageManager = (filePath) => {
-  const match = filePath.match(/\/(pnpm|npm|yarn)/);
-  return match ? match[1] : null;
-};
 async function readPackageJson(filePath) {
   const data = await readFile(filePath, "utf-8");
   return JSON.parse(data);
 }
+
+// helpers/showConsoleInfo.ts
+import chalk3 from "chalk";
+var showConsoleInfo = async (packageManager, projectName, nestProject = false) => {
+  console.log("Inside that directory, you can run several commands:");
+  console.log();
+  console.log(
+    chalk3.cyan(
+      `  ${packageManager} ${packageManager !== "npm" ? "" : "run"} ${nestProject ? "start:dev" : "dev"}`
+    )
+  );
+  console.log("    Starts the development server.");
+  console.log();
+  console.log(
+    chalk3.cyan(
+      `  ${packageManager} ${packageManager !== "npm" ? "" : "run"} ${nestProject ? "start:build" : "build"}`
+    )
+  );
+  console.log("    Builds the app for production.");
+  console.log();
+  console.log(chalk3.cyan(`  ${packageManager} start`));
+  console.log("    Runs the built app in production mode.");
+  console.log();
+  console.log("We suggest that you begin by typing:");
+  console.log();
+  console.log(chalk3.cyan("  cd"), projectName);
+  console.log(
+    `  ${chalk3.cyan(
+      `${packageManager} ${packageManager !== "npm" ? "" : "run"} ${nestProject ? "start:dev" : "dev"}`
+    )}`
+  );
+};
+
+// helpers/isNestProject.ts
+var isNestProject = async (project) => {
+  const regex = /^nestjs/i;
+  return regex.test(project);
+};
 
 // actions/create.ts
 var create = async () => {
@@ -297,7 +293,7 @@ var create = async () => {
     project.value
   );
   fs.mkdir(destination).catch((err) => {
-    console.error(chalk3.red(MESSAGES.DIRECTORY_ALREADY_EXISTS(projectDirectory)));
+    console.error(chalk4.red(MESSAGES.DIRECTORY_ALREADY_EXISTS(projectDirectory)));
     process.exit(1);
   });
   if (initialOptions.database !== "mongodb") {
@@ -305,13 +301,52 @@ var create = async () => {
   } else {
     await fs.cp(path2.join(template, "mongoose"), destination, { recursive: true });
   }
-  await installDependenciesInNewProject(destination, configProyect.packageManager, projectDirectory);
+  await installAndConfigDependencies(destination, configProyect.packageManager).then(async () => {
+    showConsoleInfo(configProyect.packageManager, configProyect.name, await isNestProject(project.value));
+  });
 };
 
 // actions/config.ts
 import inquirer2 from "inquirer";
-import path3 from "path";
+import path4 from "path";
 import { fileURLToPath as fileURLToPath2 } from "url";
+
+// helpers/copy.ts
+import chalk5 from "chalk";
+import ncp from "ncp";
+import path3 from "path";
+var copyFiles = (projectConfigPath, destinationPath, projectName) => {
+  ncp(projectConfigPath, destinationPath, {
+    filter: (source) => {
+      const nombreArchivo = path3.basename(source);
+      return nombreArchivo !== "package.json";
+    }
+  }, function(error) {
+    if (error) {
+      console.error(chalk5.red(MESSAGES.CONFIG_INIT_FAILED));
+    } else {
+      console.log(chalk5.green(MESSAGES.CONFIG_INIT_SUCCEED(projectName)));
+    }
+  });
+};
+
+// helpers/searchLockFile.ts
+import { readdir } from "fs/promises";
+var packageManagers = {
+  "package-lock.json": "npm",
+  "yarn.lock": "yarn",
+  "pnpm-lock.yaml": "pnpm"
+};
+async function searchLockFile(destinationPath) {
+  const files = await readdir(destinationPath);
+  const regex = /^(yarn\.lock|package-lock\.json|pnpm-lock\.yaml)$/;
+  const matchedFiles = files.find((file) => regex.test(file));
+  return packageManagers[matchedFiles ?? "npm"];
+}
+
+// actions/config.ts
+import { writeFile } from "fs/promises";
+import os from "os";
 var config = () => {
   inquirer2.prompt([
     {
@@ -330,12 +365,45 @@ var config = () => {
     const project = answers.projectConfig;
     const typeProject = answers.type;
     const destination = process.cwd();
-    const projectConfig = path3.join(
-      path3.dirname(fileURLToPath2(import.meta.url)),
+    const projectConfig = path4.join(
+      path4.dirname(fileURLToPath2(import.meta.url)),
       "configs",
       `${project}/${typeProject}`
     );
-    await installConfigDependencies(path3.join(projectConfig, "package.json"), destination);
+    const source = path4.join(projectConfig, "package.json");
+    copyFiles(projectConfig, destination, project);
+    const packageJSONOrigin = await readPackageJson(source);
+    const packageJSONDestination = await readPackageJson(
+      path4.join(destination, "package.json")
+    );
+    delete packageJSONDestination.jest;
+    delete packageJSONDestination.scripts["start:debug"];
+    delete packageJSONDestination.scripts["start:prod"];
+    const packageManager = await searchLockFile(destination);
+    const mergedPackageJSON = {
+      ...packageJSONDestination,
+      scripts: {
+        ...packageJSONDestination.scripts,
+        ...packageJSONOrigin.scripts
+      },
+      dependencies: {
+        ...packageJSONDestination.dependencies,
+        ...packageJSONOrigin.dependencies
+      },
+      devDependencies: {
+        ...packageJSONDestination.devDependencies,
+        ...packageJSONOrigin.devDependencies
+      },
+      config: {
+        ...packageJSONDestination.config,
+        ...packageJSONOrigin.config
+      }
+    };
+    await writeFile(
+      path4.join(destination, "package.json"),
+      JSON.stringify(mergedPackageJSON, null, 2) + os.EOL
+    );
+    await installAndConfigDependencies(destination, packageManager);
   });
 };
 

@@ -2,11 +2,11 @@ export const templateChoices = {
   'nestjs-jwt-strategy': {
     value: 'nestjs-jwt-strategy',
     description: 'NestJS with JWT Strategy'
-  },
-  'nodejs-express-basic': {
-    value: 'nodejs-express-basic',
-    description: 'Node.js with TypeScript'
   }
+  // 'nodejs-express-basic': {
+  //   value: 'nodejs-express-basic',
+  //   description: 'Node.js with TypeScript'
+  // }
 }
 
 export const connectorsDatabaseChoices = {

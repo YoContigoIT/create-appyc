@@ -8,6 +8,7 @@ export const MESSAGES = {
       : `${EMOJIS.ROCKET}  Successfully created a new project`,
   DEPENDENCIES_INSTALLATION_SUCCEED: (name: string) =>
     `${EMOJIS.ROCKET}  Dependencies installed successfully with ${chalk.green(name)}`,
+  DEPENDENCIES_INSTALLATION_FAILED: `${EMOJIS.SCREAM}  Dependencies installation failed!`,
   PACKAGE_MANAGER_INSTALLATION_FAILED: (commandToRunManually: string) =>
     `${EMOJIS.SCREAM}  Packages installation failed!\nIn case you don't see any errors above, consider manually running the failed command ${commandToRunManually} to see more details on why it errored out.`,
   PACKAGE_MANAGER_INSTALLATION_IN_PROGRESS: `Package installation in progress... ${EMOJIS.COFFEE}`,

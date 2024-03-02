@@ -5,7 +5,9 @@ import { fileURLToPath } from "url";
 import { MESSAGES } from '../utils/messages';
 import { connectorsDatabaseChoices, databaseChoises, templateChoices } from '../utils/template-choices';
 import chalk from 'chalk';
-import { installDependenciesInNewProject } from '../helpers';
+import { installAndConfigDependencies } from '../helpers';
+import { showConsoleInfo } from '../helpers/showConsoleInfo';
+import { isNestProject } from '../helpers/isNestProject';
 
 export const create = async () => {
   const initialOptions = await inquirer.prompt([
@@ -81,5 +83,7 @@ export const create = async () => {
     await fs.cp(path.join(template, 'mongoose'), destination, { recursive: true });
   }
 
-  await installDependenciesInNewProject(destination, configProyect.packageManager, projectDirectory);
+  await installAndConfigDependencies(destination, configProyect.packageManager).then(async () => {
+    showConsoleInfo(configProyect.packageManager, configProyect.name, await isNestProject(project.value))
+  })
 }

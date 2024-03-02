@@ -1,14 +1,13 @@
 {
   "scripts": {
+    "start": "node dist/main",
+    "start:dev": "nest start --builder swc --watch",
     "commit": "cz",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "release": "standard-version && git push --follow-tags origin main",
     "prepare": "husky install"
   },
   "devDependencies": {
-    "@swc/cli": "^0.3.9",
-    "@swc/core": "^1.4.2",
-    "@swc/jest": "^0.2.36",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.0",
     "eslint": "^8.54.0",
@@ -22,13 +21,6 @@
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
-    }
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.(t|j)s?$": [
-        "@swc/jest"
-      ]
     }
   }
 }
