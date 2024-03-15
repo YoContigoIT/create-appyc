@@ -1,6 +1,6 @@
 {
   "name": "create-appyc",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "description": "Create a new projects from a template",
   "main": "index.mjs",
   "preferGlobal": true,
