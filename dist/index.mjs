@@ -351,71 +351,111 @@ async function searchLockFile(destinationPath) {
 // actions/config.ts
 import { writeFile } from "fs/promises";
 import os from "os";
-var config = () => {
-  inquirer2.prompt([
+var config = async () => {
+  const projectConfig = await inquirer2.prompt([
     {
       type: "list",
-      name: "projectConfig",
+      name: "selectedProject",
       message: "Select your project:",
       choices: Object.keys(configChoices)
-    },
-    {
-      type: "list",
-      name: "type",
-      message: "Select your project:",
-      choices: ["monolithic"]
     }
-  ]).then(async (answers) => {
-    const project = answers.projectConfig;
-    const typeProject = answers.type;
-    const destination = process.cwd();
-    const projectConfig = path4.join(
-      path4.dirname(fileURLToPath2(import.meta.url)),
-      "configs",
-      `${project}/${typeProject}`
-    );
-    const source = path4.join(projectConfig, "package.json");
-    copyFiles(projectConfig, destination, project);
-    const packageJSONOrigin = await readPackageJson(source);
-    const packageJSONDestination = await readPackageJson(
-      path4.join(destination, "package.json")
-    );
-    delete packageJSONDestination.jest;
-    delete packageJSONDestination.scripts["start:debug"];
-    delete packageJSONDestination.scripts["start:prod"];
-    const packageManager = await searchLockFile(destination);
-    const mergedPackageJSON = {
-      ...packageJSONDestination,
-      scripts: {
-        ...packageJSONDestination.scripts,
-        ...packageJSONOrigin.scripts
-      },
-      dependencies: {
-        ...packageJSONDestination.dependencies,
-        ...packageJSONOrigin.dependencies
-      },
-      devDependencies: {
-        ...packageJSONDestination.devDependencies,
-        ...packageJSONOrigin.devDependencies
-      },
-      config: {
-        ...packageJSONDestination.config,
-        ...packageJSONOrigin.config
+  ]);
+  let typeProject;
+  if (projectConfig.selectedProject === "nestjs") {
+    typeProject = await inquirer2.prompt([
+      {
+        type: "list",
+        name: "type",
+        message: "Select your project:",
+        choices: ["monolith"]
       }
-    };
-    await writeFile(
-      path4.join(destination, "package.json"),
-      JSON.stringify(mergedPackageJSON, null, 2) + os.EOL
-    );
-    await installAndConfigDependencies(destination, packageManager);
-  });
+    ]);
+  }
+  const project = configChoices[projectConfig.selectedProject];
+  const destination = process.cwd();
+  const projectDir = path4.join(
+    path4.dirname(fileURLToPath2(import.meta.url)),
+    "configs",
+    project.value
+  );
+  const source = path4.join(projectDir, "package.json");
+  copyFiles(projectDir, destination, project);
+  const packageJSONOrigin = await readPackageJson(source);
+  const packageJSONDestination = await readPackageJson(
+    path4.join(destination, "package.json")
+  );
+  delete packageJSONDestination.jest;
+  delete packageJSONDestination.scripts["start:debug"];
+  delete packageJSONDestination.scripts["start:prod"];
+  const packageManager = await searchLockFile(destination);
+  const mergedPackageJSON = {
+    ...packageJSONDestination,
+    scripts: {
+      ...packageJSONDestination.scripts,
+      ...packageJSONOrigin.scripts
+    },
+    dependencies: {
+      ...packageJSONDestination.dependencies,
+      ...packageJSONOrigin.dependencies
+    },
+    devDependencies: {
+      ...packageJSONDestination.devDependencies,
+      ...packageJSONOrigin.devDependencies
+    },
+    config: {
+      ...packageJSONDestination.config,
+      ...packageJSONOrigin.config
+    }
+  };
+  await writeFile(
+    path4.join(destination, "package.json"),
+    JSON.stringify(mergedPackageJSON, null, 2) + os.EOL
+  );
+  await installAndConfigDependencies(destination, packageManager);
 };
 
 // package.json
-var version = "1.1.0";
+var package_default = {
+  name: "create-appyc",
+  version: "1.2.1",
+  description: "Create a new projects from a template",
+  main: "index.mjs",
+  preferGlobal: true,
+  bin: {
+    "create-appyc": "dist/index.mjs"
+  },
+  files: [
+    "dist/**/*"
+  ],
+  author: "Ulises Vargas",
+  license: "MIT",
+  dependencies: {
+    chalk: "5.3.0",
+    commander: "12.0.0",
+    glob: "^10.3.10",
+    inquirer: "8.2.6",
+    ncp: "2.0.0",
+    "node-emoji": "2.1.3",
+    "ts-node": "10.9.2",
+    "update-notifier": "^7.0.0"
+  },
+  scripts: {
+    build: "tsup",
+    start: "node dist/index.mjs",
+    dev: "tsup --watch"
+  },
+  devDependencies: {
+    "@types/inquirer": "9.0.7",
+    "@types/ncp": "2.0.8",
+    "@types/node": "^20.11.20",
+    "@types/update-notifier": "^6.0.8",
+    tsup: "^8.0.2",
+    typescript: "^5.3.3"
+  }
+};
 
 // index.ts
-program.name("create-appyc").version(version, "-v, --version", "Output the current version").description("Create a new project with Appyc");
+program.name("create-appyc").version(package_default.version, "-v, --version", "Output the current version").description("Create a new project with Appyc");
 program.command("create").description("Create a new project").action(create);
 program.command("config").description("Initialize the configuration").action(config);
 if (process.argv.length <= 2)

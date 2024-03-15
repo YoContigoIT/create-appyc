@@ -39,9 +39,9 @@ export const configChoices = {
   'nestjs': {
     value: 'nestjs',
     description: 'Config for NestJS'
+  },
+  'express': {
+    value: 'express',
+    description: 'Config for Express with TypeScript'
   }
-  // 'express': {
-  //   value: 'express',
-  //   description: 'Config for Express with TypeScript'
-  // }
 }
